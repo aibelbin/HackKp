@@ -50,7 +50,7 @@ if __name__ == "__main__":
     #     print("Usage: python image_metadata.py ")
     #     sys.exit(1)
 
-    image_path = "../Task1_/assets/image0.jpeg"
+    image_path = "../Task1_MetaData/assets/image0.jpeg"
     exif = get_exif_data(image_path)
 
     print("=== Extracted Metadata ===")
