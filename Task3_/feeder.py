@@ -7,6 +7,7 @@ API_URL_DOWNLOAD = "http://127.0.0.1:8000/imagesearch"
 
 sourcefolder = 'images'
 word = input("Word: ")
+download_folder = "download"
 
 def uploadimage():
     for filename in os.listdir(sourcefolder): 
@@ -17,30 +18,27 @@ def uploadimage():
             print(response)
 
 def downloadImage(word):
-    response =  requests.get(API_URL_SEARCH, word)
+    response = requests.get(API_URL_SEARCH, params={"word": word})
     data = response.json()
-    image_urls = data['image_urls']
-    possible_list = []
-    for i in image_urls:
-        new = os.path.basename(i)
-        possible_list.append(new)
-        # print(possible_list)
+    print(data)
     
-    for i in possible_list:
-        download_folder = "download"
-        reponse = requests.post(API_URL_DOWNLOAD, params={'image_name': i})
-        save_path = os.path.join(download_folder, i)
-        with open(save_path, 'wb') as f:
+    response = requests.get(API_URL_DOWNLOAD, params={"image_name": data})
+
+    if response.status_code == 200:
+        os.makedirs(download_folder, exist_ok=True)
+        save_path = os.path.join(download_folder, data)
+
+        with open(save_path, "wb") as f:
             f.write(response.content)
-            print("File Saved")
 
+            print(f" Downloaded: {save_path}")
+    else:
+        print(f" Failed to download: {response.status_code}")
 
-
-        
     
-    
-    # word_to_send = os.path.basename(response)
-    # print(word_to_send)
+
+
+
 
 
 downloadImage(word)
