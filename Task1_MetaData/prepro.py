@@ -23,7 +23,7 @@ import subprocess
 import json
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), "..", "assets")
-IMAGE_NAME = "sample.png"
+IMAGE_NAME = "#"
 IMAGE_PATH = os.path.join(ASSETS_DIR, IMAGE_NAME)
 
 def extract_with_tesseract(image_path):

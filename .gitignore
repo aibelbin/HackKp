@@ -1,0 +1,19 @@
+# Python virtual environment
+/.venv/
+
+# Environment variables
+.env
+
+# Python artifacts
+__pycache__/
+
+# Project-specific folders
+# This single rule ignores ALL 'assets' folders
+assets/
+
+# Corrected path for the DataSet folder inside Task2
+Task2_/DataSet/
+Task3_/.env
+Task3_/images   
+Task3_/__pycache__
+Task1_MetaData/assets
