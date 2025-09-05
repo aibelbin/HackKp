@@ -36,7 +36,7 @@ with open(imagetosearch, 'rb') as file_content:
             f"A: {data}\n"
             f"B: {desc}"
         )
-        res = ollama.chat(model="llama3", messages=[{"role": "user", "content": prompt}])
+        res = ollama.chat(model="gpt-oss", messages=[{"role": "user", "content": prompt}])
         content = res.get("message", {}).get("content", "").strip()
         s = ''.join(ch for ch in content if (ch.isdigit() or ch == '.'))
         try:
