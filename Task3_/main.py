@@ -28,7 +28,7 @@ def health():
     return "healthy"
 
 @app.post('/upload_image')
-async def upload_image(image: UploadFile  = File, prompt: str = "You are an expert image cataloger. Your task is to provide a detailed, single-paragraph description of the following image. Focus on creating a description rich with searchable keywords. In your description, identify and include: The main subject and any prominent figures or objects. The setting and environment (e.g., indoor, outdoor, city, forest, beach). Specific details and smaller objects in the background and foreground. Key colors, lighting, and textures. The overall mood, atmosphere, and any actions taking place. Combine these elements into a fluid, descriptive paragraph. Do not use lists or bullet points in your final output" ):
+async def upload_image(image: UploadFile  = File(...), prompt: str = "You are an expert image cataloger. Your task is to provide a detailed, single-paragraph description of the following image. Focus on creating a description rich with searchable keywords. In your description, identify and include: The main subject and any prominent figures or objects. The setting and environment (e.g., indoor, outdoor, city, forest, beach). Specific details and smaller objects in the background and foreground. Key colors, lighting, and textures. The overall mood, atmosphere, and any actions taking place. Combine these elements into a fluid, descriptive paragraph. Do not use lists or bullet points in your final output" ):
     image_byte = await image.read()
     base64_image = base64.b64encode(image_byte).decode('utf-8')
     content_type = image.content_type
