@@ -103,7 +103,11 @@ async def get_image(image_name: str):
     image_path = os.path.join('images', image_name)
     
     if os.path.exists(image_path):
-        return FileResponse(image_path)
+        return FileResponse(
+            image_path,
+            media_type="application/octet-stream",  
+            filename=image_name  
+        )
     else:
         raise HTTPException(status_code=404, detail="Image not found.")
 
