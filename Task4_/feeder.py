@@ -9,6 +9,8 @@ load_dotenv()
 imagetosearch = 'imagetosearch/lotofthings.jpg'
 filename = os.path.basename(imagetosearch)
 DESCRIPTION_URL = "http://127.0.0.1:8000/upload_image"
+API_URL_DOWNLOAD="http://127.0.0.1:8000/image_search"
+download_folder = 'download'
 
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
@@ -48,8 +50,25 @@ with open(imagetosearch, 'rb') as file_content:
             best_file = fname
     print(best_file)
 
+def image_downloader(image_name):
+    response = requests.get(API_URL_DOWNLOAD, params={"image_name": data})
+
+    if response.status_code == 200:
+        os.makedirs(download_folder, exist_ok=True)
+        save_path = os.path.join(download_folder, data)
+
+        with open(save_path, "wb") as f:
+            f.write(response.content)
+
+            print(f" Downloaded: {save_path}")
+    else:
+        print(f" Failed to download: {response.status_code}")
 
 
 
+
+
+
+image_downloader(best_file)
 
 
