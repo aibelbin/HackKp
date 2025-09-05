@@ -17,3 +17,8 @@ Task3_/.env
 Task3_/images   
 Task3_/__pycache__
 Task1_MetaData/assets
+
+/Task3_/download
+/Task4_/imagetosearch
+
+/DataSet/hq50k_images
