@@ -1,10 +1,13 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
 import os 
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from groq import Groq
 import base64
 import uuid
+import re
+import requests
 
 load_dotenv()
 
@@ -18,6 +21,39 @@ table_name = 'images'
 app = FastAPI()
 
 image_directory = ""
+API_URL = "http://127.0.0.1:8000/images/{image_name}"
+
+
+def find_images_by_word(response_object, search_word):
+    matching_files = []
+    image_data_list = []
+
+    if hasattr(response_object, 'data') and isinstance(response_object.data, list):
+        image_data_list = response_object.data
+    elif isinstance(response_object, list):
+        image_data_list = response_object
+    else:
+        return None
+    
+    clean_search_word = search_word.lower()
+
+    for item in image_data_list:
+        description = ""
+        file_name = ""
+
+        if isinstance(item, dict):
+            description = item.get('Description', '').lower()
+            file_name = item.get('file_name')
+        elif isinstance(item, tuple) and len(item) >= 2:
+            file_name = item[0]
+            description = str(item[1]).lower()
+
+        if clean_search_word in description:
+            if file_name and file_name not in matching_files:
+                matching_files.append(file_name)
+
+    return matching_files if matching_files else None
+
 
 @app.get('/')
 def root():
@@ -66,8 +102,33 @@ async def upload_image(image: UploadFile  = File(...), prompt: str = "You are an
     return(response)
     # return {"analysis": response_content}
 
-    
+@app.get("/search")
+async def search(word: str = ""):
+    responsefromsupa = supabase.table(table_name).select('file_name,Description').execute()
+    matching_files = find_images_by_word(responsefromsupa, word)
 
+    if not matching_files:
+        raise HTTPException(status_code=404, detail="No matching images found.")
+    
+    image_urls = [f"/images/{filename}" for filename in matching_files]
+    # matching_name = []
+    # for f in matching_files:
+    #     matching_name.append(f)    
+    # for i in matching_name:    
+    #     response = requests.post(API_URL,i)
+    #     responselist = []
+    #     responselist.append(response)   #for use later
+    
+    return JSONResponse(content={"image_urls": image_urls})
+
+@app.get("/imagesearch")
+async def get_image(image_name: str):
+    image_path = os.path.join('images', image_name)
+    
+    if os.path.exists(image_path):
+        return FileResponse(image_path)
+    else:
+        raise HTTPException(status_code=404, detail="Image not found.")
 
     
 
