@@ -92,8 +92,7 @@ export function InvestigatorTool() {
   const scaleSelectionsForImage = useCallback(
     (rects: Selection[]) => {
       const canvas = canvasRef.current
-      const img = imageRef.current
-      if (!canvas || !img || !naturalSize) return [] as Selection[]
+      if (!canvas || !naturalSize) return rects
       const sx = naturalSize.width / canvas.width
       const sy = naturalSize.height / canvas.height
       return rects.map((r) => ({
@@ -114,7 +113,7 @@ export function InvestigatorTool() {
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
 
-      if (selectedTool === "select") {
+  if (selectedTool === "select" || selectedTool === "crop" || selectedTool === "blackout" || selectedTool === "blur") {
         setIsDrawing(true)
         setCurrentSelection({ x, y, width: 0, height: 0 })
       } else if (selectedTool === "deselect") {
