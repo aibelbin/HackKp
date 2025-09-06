@@ -9,7 +9,7 @@ load_dotenv()
 imagetosearch = 'imagetosearch/lotofthings.jpg'
 filename = os.path.basename(imagetosearch)
 DESCRIPTION_URL = "http://127.0.0.1:8000/upload_image"
-API_URL_DOWNLOAD="http://127.0.0.1:8000/image_search"
+API_URL_DOWNLOAD="http://127.0.0.1:8000/imagesearch"
 download_folder = 'download'
 
 url: str = os.environ.get("SUPABASE_URL")
