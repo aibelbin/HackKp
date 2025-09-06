@@ -12,10 +12,11 @@ load_dotenv()
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
+
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
-table_name = ''
+table_name = 'objects'
 
 app = FastAPI()
 
@@ -62,7 +63,7 @@ def health():
     return "healthy"
 
 @app.post('/upload_image')
-async def upload_image(image: UploadFile  = File(...), prompt: str = "You are an expert image cataloger. Your task is to provide a detailed, description of the object in the image, the object has to be accurately identified and described in a single paragraph" ):
+async def upload_image(image: UploadFile  = File(...), prompt: str = "You are an expert image cataloger. Your task is to provide a detailed, description of the objects in the image, the objects has to be accurately identified and listed" ):
     image_byte = await image.read()
     base64_image = base64.b64encode(image_byte).decode('utf-8')
     content_type = image.content_type
@@ -91,9 +92,12 @@ async def upload_image(image: UploadFile  = File(...), prompt: str = "You are an
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             max_tokens=1024,
         )
+    # random_uuid = uuid.uuid4()
     response_content = chat_completion.choices[0].message.content
+    # response = (supabase.table(table_name).insert({"id":str(random_uuid), 'file_name': filename, 'Description': response_content
+    # }).execute())
   
-    return JSONResponse(response_content)
+    return response_content
     
 
 
