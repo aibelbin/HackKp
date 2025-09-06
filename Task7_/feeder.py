@@ -48,7 +48,7 @@ def listofsimilar(singleimagedata, setofdescriptions):
     similar_files = []
     for file_name, description in setofdescriptions.items():
         prompt = f"Compare these two image descriptions and determine if they show the same or very similar objects. Answer only 'yes' or 'no'.\n\nDescription 1: {singleimagedata}\nDescription 2: {description}"
-        response = ollama.chat(model="llama3", messages=[{"role": "user", "content": prompt}])
+        response = ollama.chat(model="gpt-oss", messages=[{"role": "user", "content": prompt}])
         answer = response.get("message", {}).get("content", "").strip().lower()
         if "yes" in answer:
             similar_files.append(file_name)
@@ -60,8 +60,7 @@ imagestodownload = []
 imagestodownload = listofsimilar(data, filename_description_map)
 
 
-for i in imagestodownload:
-    image_downloader(imagestodownload[i])
+
 
 
 def image_downloader(image_name):
@@ -79,6 +78,9 @@ def image_downloader(image_name):
         print(f" Failed to download: {response.status_code}")
 
 
+
+for i in imagestodownload:
+    image_downloader(imagestodownload[i])
 
 
 
