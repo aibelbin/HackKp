@@ -2,3 +2,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 pillow==10.4.0
 pydantic==2.8.2
+opencv-contrib-python==4.10.0.84
+numpy==2.1.1
+rembg==2.0.56
+onnxruntime==1.18.1

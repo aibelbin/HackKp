@@ -185,7 +185,7 @@ export function InvestigatorTool() {
 
   const processImage = useCallback(async () => {
     if (!uploadedImage || selections.length === 0) return
-    const endpoint = selectedTool === "crop" ? "crop" : selectedTool === "blackout" ? "blackout" : "blur"
+    const endpoint = selectedTool === "crop" ? "crop" : selectedTool === "blackout" ? "blackout" : selectedTool === "blur" ? "blur" : "select_object"
     const base64 = uploadedImage.startsWith("data:") ? uploadedImage.split(",")[1] : uploadedImage
     const scaled = scaleSelectionsForImage(selections)
     try {
@@ -250,7 +250,7 @@ export function InvestigatorTool() {
 
           <div className="space-y-2">
             <Button onClick={processImage} disabled={!uploadedImage || selections.length === 0} className="w-full">
-              Apply {selectedTool === "crop" ? "Crop" : selectedTool === "blackout" ? "Blackout" : "Blur"}
+              Apply {selectedTool === "crop" ? "Crop" : selectedTool === "blackout" ? "Blackout" : selectedTool === "blur" ? "Blur" : "Select"}
             </Button>
 
             <Button
