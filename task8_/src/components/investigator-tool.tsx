@@ -28,10 +28,13 @@ export function InvestigatorTool() {
   const [isDrawing, setIsDrawing] = useState(false)
   const [currentSelection, setCurrentSelection] = useState<Selection | null>(null)
   const [processedImage, setProcessedImage] = useState<string | null>(null)
+  const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"
 
   const tools = [
     { id: "select" as Tool, name: "Select Tool", icon: MousePointer, description: "Click to select an object" },
@@ -86,6 +89,23 @@ export function InvestigatorTool() {
     drawCanvas()
   }, [drawCanvas])
 
+  const scaleSelectionsForImage = useCallback(
+    (rects: Selection[]) => {
+      const canvas = canvasRef.current
+      const img = imageRef.current
+      if (!canvas || !img || !naturalSize) return [] as Selection[]
+      const sx = naturalSize.width / canvas.width
+      const sy = naturalSize.height / canvas.height
+      return rects.map((r) => ({
+        x: Math.round(r.x * sx),
+        y: Math.round(r.y * sy),
+        width: Math.round(r.width * sx),
+        height: Math.round(r.height * sy),
+      }))
+    },
+    [naturalSize]
+  )
+
   const handleCanvasMouseDown = useCallback(
     (event: React.MouseEvent<HTMLCanvasElement>) => {
       if (!canvasRef.current) return
@@ -98,10 +118,16 @@ export function InvestigatorTool() {
         setIsDrawing(true)
         setCurrentSelection({ x, y, width: 0, height: 0 })
       } else if (selectedTool === "deselect") {
-        // Remove selection at this point
-        setSelections((prev) =>
-          prev.filter((sel) => !(x >= sel.x && x <= sel.x + sel.width && y >= sel.y && y <= sel.y + sel.height)),
-        )
+        fetch(`${API_BASE}/deselect`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selections, x: Math.round(x), y: Math.round(y) }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (Array.isArray(data.selections)) setSelections(data.selections)
+          })
+          .catch(() => {})
       }
     },
     [selectedTool],
@@ -135,78 +161,43 @@ export function InvestigatorTool() {
       Math.abs(currentSelection.width) > 10 &&
       Math.abs(currentSelection.height) > 10
     ) {
-      setSelections((prev) => [
-        ...prev,
-        {
-          x: Math.min(currentSelection.x, currentSelection.x + currentSelection.width),
-          y: Math.min(currentSelection.y, currentSelection.y + currentSelection.height),
-          width: Math.abs(currentSelection.width),
-          height: Math.abs(currentSelection.height),
-        },
-      ])
+      const rect = {
+        x: Math.min(currentSelection.x, currentSelection.x + currentSelection.width),
+        y: Math.min(currentSelection.y, currentSelection.y + currentSelection.height),
+        width: Math.abs(currentSelection.width),
+        height: Math.abs(currentSelection.height),
+      }
+      fetch(`${API_BASE}/select`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selections, rect }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data.selections)) setSelections(data.selections)
+          else setSelections((prev) => [...prev, rect])
+        })
+        .catch(() => setSelections((prev) => [...prev, rect]))
     }
     setIsDrawing(false)
     setCurrentSelection(null)
   }, [isDrawing, currentSelection])
 
   const processImage = useCallback(async () => {
-    if (!canvasRef.current || !uploadedImage || selections.length === 0) return
-
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext("2d")
-    const img = imageRef.current
-
-    if (!ctx || !img) return
-
-    // Create a new canvas for processing
-    const processCanvas = document.createElement("canvas")
-    const processCtx = processCanvas.getContext("2d")
-
-    if (!processCtx) return
-
-    processCanvas.width = canvas.width
-    processCanvas.height = canvas.height
-
-    // Draw the original image
-    processCtx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-    // Apply effects to selected areas
-    selections.forEach((selection) => {
-      if (selectedTool === "blackout") {
-        processCtx.fillStyle = "#000000"
-        processCtx.fillRect(selection.x, selection.y, selection.width, selection.height)
-      } else if (selectedTool === "blur") {
-        // Simple blur effect using canvas filter
-        const imageData = processCtx.getImageData(selection.x, selection.y, selection.width, selection.height)
-        processCtx.filter = "blur(10px)"
-        processCtx.putImageData(imageData, selection.x, selection.y)
-        processCtx.filter = "none"
-      } else if (selectedTool === "crop") {
-        // For crop, we'll create a new canvas with just the selected area
-        const cropCanvas = document.createElement("canvas")
-        const cropCtx = cropCanvas.getContext("2d")
-        if (cropCtx) {
-          cropCanvas.width = selection.width
-          cropCanvas.height = selection.height
-          cropCtx.drawImage(
-            processCanvas,
-            selection.x,
-            selection.y,
-            selection.width,
-            selection.height,
-            0,
-            0,
-            selection.width,
-            selection.height,
-          )
-          setProcessedImage(cropCanvas.toDataURL())
-          return
-        }
-      }
-    })
-
-    setProcessedImage(processCanvas.toDataURL())
-  }, [uploadedImage, selections, selectedTool])
+    if (!uploadedImage || selections.length === 0) return
+    const endpoint = selectedTool === "crop" ? "crop" : selectedTool === "blackout" ? "blackout" : "blur"
+    const base64 = uploadedImage.startsWith("data:") ? uploadedImage.split(",")[1] : uploadedImage
+    const scaled = scaleSelectionsForImage(selections)
+    try {
+      const res = await fetch(`${API_BASE}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64: base64, selections: scaled }),
+      })
+      const data = await res.json()
+      if (data?.image_base64) setProcessedImage(`data:image/png;base64,${data.image_base64}`)
+    } catch {}
+  }, [uploadedImage, selections, selectedTool, scaleSelectionsForImage])
 
   const downloadImage = useCallback(() => {
     if (!processedImage) return
@@ -326,7 +317,11 @@ export function InvestigatorTool() {
                   src={uploadedImage || "/placeholder.svg"}
                   alt="Uploaded"
                   className="hidden"
-                  onLoad={drawCanvas}
+                  onLoad={(e) => {
+                    const target = e.currentTarget
+                    setNaturalSize({ width: target.naturalWidth, height: target.naturalHeight })
+                    drawCanvas()
+                  }}
                 />
               </div>
 
