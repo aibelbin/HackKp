@@ -21,7 +21,7 @@ response = (supabase.table(table_name).select("*").execute())
 
 filename_description_map = {item['file_name']: item['Description'] for item in response.data}
 
-print(filename_description_map)
+# print(filename_description_map)
 
 
 
